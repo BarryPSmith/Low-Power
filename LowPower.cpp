@@ -1,3 +1,5 @@
+//BS Change: Make all WDT things only included #ifdef LOWPOWER_USE_WDT
+
 /*******************************************************************************
 * LowPower Library
 * Version: 1.80
@@ -35,7 +37,9 @@
 *******************************************************************************/
 #if defined (__AVR__)
 	#include <avr/sleep.h>
+#ifdef LOWPOWER_USE_WDT
 	#include <avr/wdt.h>
+#endif
 	#include <avr/power.h>
 	#include <avr/interrupt.h>
 #elif defined (__arm__)
@@ -192,13 +196,16 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 	if (spi == SPI_OFF)			power_spi_disable();
 	if (usart0 == USART0_OFF)	power_usart0_disable();
 	if (twi == TWI_OFF)			power_twi_disable();
-
+	
+#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_IDLE);
 
 	if (adc == ADC_OFF)
@@ -304,12 +311,15 @@ void	LowPowerClass::idle(period_t period, adc_t adc,
 	if (twi == TWI_OFF)			power_twi_disable();
 	if (usb == USB_OFF)			power_usb_disable();
 
+#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_IDLE);
 
 	if (adc == ADC_OFF)
@@ -419,12 +429,15 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 	if (usart0 == USART0_OFF)	power_usart0_disable();
 	if (twi == TWI_OFF)			power_twi_disable();
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_IDLE);
 
 	if (adc == ADC_OFF)
@@ -570,12 +583,15 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 	if (usart0 == USART0_OFF)	power_usart0_disable();
 	if (twi == TWI_OFF)			power_twi_disable();
 
+#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_IDLE);
 
 	if (adc == ADC_OFF)
@@ -716,12 +732,15 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 	if (usart0 == USART0_OFF)	power_usart0_disable();
 	if (twi == TWI_OFF)			  power_twi_disable();
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_IDLE);
 
 	if (adc == ADC_OFF)
@@ -806,12 +825,15 @@ void	LowPowerClass::adcNoiseReduction(period_t period, adc_t adc,
 
 	if (adc == ADC_OFF)	ADCSRA &= ~(1 << ADEN);
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	lowPowerBodOn(SLEEP_MODE_ADC);
 
 	if (adc == ADC_OFF) ADCSRA |= (1 << ADEN);
@@ -864,22 +886,28 @@ void	LowPowerClass::powerDown(period_t period, adc_t adc, bod_t bod)
 {
 	if (adc == ADC_OFF)	ADCSRA &= ~(1 << ADEN);
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-	if (bod == BOD_OFF)
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	{
-		#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
-			lowPowerBodOff(SLEEP_MODE_PWR_DOWN);
-		#else
+		if (bod == BOD_OFF)
+		{
+			#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
+				lowPowerBodOff(SLEEP_MODE_PWR_DOWN);
+			#else
+				lowPowerBodOn(SLEEP_MODE_PWR_DOWN);
+			#endif
+		}
+		else
+		{
 			lowPowerBodOn(SLEEP_MODE_PWR_DOWN);
-		#endif
-	}
-	else
-	{
-		lowPowerBodOn(SLEEP_MODE_PWR_DOWN);
+		}
 	}
 
 	if (adc == ADC_OFF) ADCSRA |= (1 << ADEN);
@@ -950,23 +978,28 @@ void	LowPowerClass::powerSave(period_t period, adc_t adc, bod_t bod,
 
 	if (adc == ADC_OFF)	ADCSRA &= ~(1 << ADEN);
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
-	if (bod == BOD_OFF)
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	{
-		#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
-			lowPowerBodOff(SLEEP_MODE_PWR_SAVE);
-		#else
+		if (bod == BOD_OFF)
+		{
+			#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
+				lowPowerBodOff(SLEEP_MODE_PWR_SAVE);
+			#else
+				lowPowerBodOn(SLEEP_MODE_PWR_SAVE);
+			#endif
+		}
+		else
+		{
 			lowPowerBodOn(SLEEP_MODE_PWR_SAVE);
-		#endif
-	}
-	else
-	{
-		lowPowerBodOn(SLEEP_MODE_PWR_SAVE);
+		}
 	}
 
 	if (adc == ADC_OFF) ADCSRA |= (1 << ADEN);
@@ -1015,23 +1048,28 @@ void	LowPowerClass::powerStandby(period_t period, adc_t adc, bod_t bod)
 {
 	if (adc == ADC_OFF)	ADCSRA &= ~(1 << ADEN);
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
-	if (bod == BOD_OFF)
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
 	{
-		#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
-			lowPowerBodOff(SLEEP_MODE_STANDBY);
-		#else
+		if (bod == BOD_OFF)
+		{
+			#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
+				lowPowerBodOff(SLEEP_MODE_STANDBY);
+			#else
+				lowPowerBodOn(SLEEP_MODE_STANDBY);
+			#endif
+		}
+		else
+		{
 			lowPowerBodOn(SLEEP_MODE_STANDBY);
-		#endif
-	}
-	else
-	{
-		lowPowerBodOn(SLEEP_MODE_STANDBY);
+		}
 	}
 
 	if (adc == ADC_OFF) ADCSRA |= (1 << ADEN);
@@ -1095,28 +1133,32 @@ void	LowPowerClass::powerExtStandby(period_t period, adc_t adc, bod_t bod,
 
 	if (adc == ADC_OFF)	ADCSRA &= ~(1 << ADEN);
 
+	#ifdef LOWPOWER_USE_WDT
 	if (period != SLEEP_FOREVER)
 	{
 		wdt_enable(period);
 		WDTCSR |= (1 << WDIE);
 	}
-
-
-	#if defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) // SLEEP_MODE_EXT_STANDBY not implemented on Atmega88 / Atmega168
-	#else
-		if (bod == BOD_OFF)
-		{
-			#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
-				lowPowerBodOff(SLEEP_MODE_EXT_STANDBY);
-			#else
+#else //Don't sleep at all if we've been given a wakeup and cannot use WDT.
+	if (period == SLEEP_FOREVER)
+#endif
+	{
+		#if defined (__AVR_ATmega88__) || defined (__AVR_ATmega168__) // SLEEP_MODE_EXT_STANDBY not implemented on Atmega88 / Atmega168
+		#else
+			if (bod == BOD_OFF)
+			{
+				#if defined (__AVR_ATmega328P__) || defined (__AVR_ATmega168P__)
+					lowPowerBodOff(SLEEP_MODE_EXT_STANDBY);
+				#else
+					lowPowerBodOn(SLEEP_MODE_EXT_STANDBY);
+				#endif
+			}
+			else
+			{
 				lowPowerBodOn(SLEEP_MODE_EXT_STANDBY);
-			#endif
-		}
-		else
-		{
-			lowPowerBodOn(SLEEP_MODE_EXT_STANDBY);
-		}
-	#endif
+			}
+		#endif
+	}
 
 	if (adc == ADC_OFF) ADCSRA |= (1 << ADEN);
 
@@ -1137,11 +1179,13 @@ void	LowPowerClass::powerExtStandby(period_t period, adc_t adc, bod_t bod,
 *			   hardware.
 *
 *******************************************************************************/
+#ifdef LOWPOWER_USE_WDT
 ISR (WDT_vect)
 {
 	// WDIE & WDIF is cleared in hardware upon entering this ISR
 	wdt_disable();
 }
+#endif
 
 #elif defined (__arm__)
 #if defined (__SAMD21G18A__)
