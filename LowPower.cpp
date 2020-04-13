@@ -2,8 +2,8 @@
 
 /*******************************************************************************
 * LowPower Library
-* Version: 1.80
-* Date: 04-10-2018
+* Version: 1.81
+* Date: 21-01-2020
 * Author: Lim Phang Moh
 * Company: Rocket Scream Electronics
 * Website: www.rocketscream.com
@@ -15,6 +15,8 @@
 *
 * Revision  Description
 * ========  ===========
+* 1.81      Fixed timer 2 settings incorrectly restored after sleep.
+*           Contributed by rwared11.
 * 1.80      Added support for ATmega88 and ATmega168P. PowerExtStandby()
 *           modified because not supported on Atmega88 / Atmega168
 *           Contributed by mrguen.
@@ -173,9 +175,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -216,10 +217,9 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
-
+        // Restore previous setting
+        TCCR2B = clockSource;
+        
 		power_timer2_enable();
 	}
 
@@ -404,9 +404,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -448,9 +447,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer2_t timer2,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
+        // Restore previous setting
+        TCCR2B = clockSource;
 
 		power_timer2_enable();
 	}
@@ -553,9 +551,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -602,9 +599,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
+        // Restore previous setting
+        TCCR2B = clockSource;
 
 		power_timer2_enable();
 	}
@@ -704,9 +700,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -751,9 +746,8 @@ void	LowPowerClass::idle(period_t period, adc_t adc, timer5_t timer5,
 
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
+        // Restore previous setting
+        TCCR2B = clockSource;
 
 		power_timer2_enable();
 	}
@@ -812,9 +806,8 @@ void	LowPowerClass::adcNoiseReduction(period_t period, adc_t adc,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -841,10 +834,8 @@ void	LowPowerClass::adcNoiseReduction(period_t period, adc_t adc,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
-
+        // Restore previous setting
+        TCCR2B = clockSource;
 	}
 	#endif
 }
@@ -965,9 +956,8 @@ void	LowPowerClass::powerSave(period_t period, adc_t adc, bod_t bod,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -1007,9 +997,8 @@ void	LowPowerClass::powerSave(period_t period, adc_t adc, bod_t bod,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
+        // Restore previous setting
+        TCCR2B = clockSource;
 	}
 	#endif
 }
@@ -1120,9 +1109,8 @@ void	LowPowerClass::powerExtStandby(period_t period, adc_t adc, bod_t bod,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (TCCR2B & CS22) clockSource |= (1 << CS22);
-		if (TCCR2B & CS21) clockSource |= (1 << CS21);
-		if (TCCR2B & CS20) clockSource |= (1 << CS20);
+		// Store current setting
+        clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
 		TCCR2B &= ~(1 << CS22);
@@ -1165,9 +1153,8 @@ void	LowPowerClass::powerExtStandby(period_t period, adc_t adc, bod_t bod,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-		if (clockSource & CS22) TCCR2B |= (1 << CS22);
-		if (clockSource & CS21) TCCR2B |= (1 << CS21);
-		if (clockSource & CS20) TCCR2B |= (1 << CS20);
+        // Restore previous setting
+        TCCR2B = clockSource;
 	}
 	#endif
 }
