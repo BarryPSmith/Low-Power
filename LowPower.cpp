@@ -960,9 +960,9 @@ void	LowPowerClass::powerSave(period_t period, adc_t adc, bod_t bod,
         clockSource = TCCR2B;
 
 		// Remove the clock source to shutdown Timer2
-		TCCR2B &= ~(1 << CS22);
-		TCCR2B &= ~(1 << CS21);
-		TCCR2B &= ~(1 << CS20);
+		TCCR2B &= ~(_BV(CS22) | _BV(CS21) | _BV(CS20));
+		if (ASSR & _BV(AS2))
+			while (ASSR & _BV(TCR2BUB));
 	}
 	#endif
 
@@ -997,8 +997,10 @@ void	LowPowerClass::powerSave(period_t period, adc_t adc, bod_t bod,
 	#if !defined(__AVR_ATmega32U4__)
 	if (timer2 == TIMER2_OFF)
 	{
-        // Restore previous setting
-        TCCR2B = clockSource;
+    // Restore previous setting
+    TCCR2B = clockSource;
+		if (ASSR & _BV(AS2))
+			while (ASSR & _BV(TCR2BUB));
 	}
 	#endif
 }
